@@ -10,8 +10,24 @@ import ContactForm from '@/components/ContactForm';
 import Footer from '@/components/Footer';
 
 export const metadata = {
-  title: 'Aura Studio | Premium Freelance Web Dev & Design',
+  title: 'AIravatha Foundry',
   description: 'Gen Z-styled high-performing single-page websites, interactive 3D menus, bakery customizers, and eye-melting posters.',
+  icons: {
+    icon: '/logo.jpg',        
+    apple: '/logo.jpg',       
+  },
+  openGraph: {
+    title: 'AIravatha Foundry',
+    description: 'Gen Z-styled high-performing single-page websites, interactive 3D menus, bakery customizers, and eye-melting posters.',
+    images: [
+      {
+        url: '/logo.png',
+        width: 800,
+        height: 600,
+        alt: 'AIravatha Foundry Logo',
+      },
+    ],
+  },
 };
 
 export default function Home() {

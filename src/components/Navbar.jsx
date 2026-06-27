@@ -78,7 +78,7 @@ export default function Navbar() {
         >
           <img 
             src="/logo.jpg" 
-            alt="Airavatha Logo" 
+            alt="AIravatha Logo" 
             style={{ 
               width: '42px', 
               height: '42px', 
@@ -88,7 +88,7 @@ export default function Navbar() {
               boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
             }} 
           />
-          <span className="font-extrabold uppercase tracking-widest" style={{ fontSize: '1.05rem', letterSpacing: '0.18em' }}>Airavatha</span>
+          <span className="font-extrabold uppercase tracking-widest" style={{ fontSize: '1.05rem', letterSpacing: '0.18em' }}>AIravatha</span>
         </a>
 
         {/* Desktop Navigation */}

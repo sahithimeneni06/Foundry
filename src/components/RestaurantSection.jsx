@@ -8,6 +8,8 @@ import {
   Play, Eye, CheckCircle, Server, Zap, BarChart2, QrCode, Edit3
 } from 'lucide-react';
 
+// ─── removed: useGLTF and MeshoptDecoder imports ───
+
 const menuItems = [
   { id: 1, name: 'Truffle Glazed Burger', category: 'Gourmet Mains', calories: '650 kcal', glb: '/burger.glb' },
   { id: 2, name: 'Neapolitan Burrata Pizza', category: 'Woodfired Pizza', calories: '820 kcal', glb: '/pizza.glb' },
@@ -35,14 +37,22 @@ export default function RestaurantSection() {
   const [activeSlide,       setActiveSlide]       = useState(0); // slide nav tabs
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && !customElements.get('model-viewer')) {
+  if (typeof window !== 'undefined' && !customElements.get('model-viewer')) {
+    const decoderScript = document.createElement('script');
+    decoderScript.src = 'https://unpkg.com/meshoptimizer@0.23.1/meshopt_decoder.js';
+    decoderScript.onload = () => {
+      // Only load model‑viewer after decoder is ready
       const script = document.createElement('script');
       script.type = 'module';
       script.src = 'https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js';
       script.onload = () => setModelViewerReady(true);
       document.head.appendChild(script);
-    } else { setModelViewerReady(true); }
-  }, []);
+    };
+    document.head.appendChild(decoderScript);
+  } else {
+    setModelViewerReady(true);
+  }
+}, []);
 
   const currentSlide    = backendWorkSlides[backendIndex];
   const totalSlideImages = backendWorkSlides.reduce((a, s) => a + s.images.length, 0);

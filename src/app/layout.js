@@ -22,7 +22,7 @@ export const metadata = {
         url: "/logo.png",  // your OG image
         width: 1200,
         height: 630,
-        alt: "Airavatha Logo",
+        alt: "AIravatha Logo",
       },
     ],
   },
