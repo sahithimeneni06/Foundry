@@ -12,10 +12,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Airavatha",
+  title: "AIravatha",
   description: "Digital Design & Development Studio",
   openGraph: {
-    title: "Airavatha",
+    title: "AIravatha",
     description: "Digital Design & Development Studio",
     images: [
       {

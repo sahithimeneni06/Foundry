@@ -156,7 +156,7 @@ export default function Footer() {
                   letterSpacing: '-0.02em',
                 }}
               >
-                Airavatha Foundry
+                AIravatha Foundry
               </span>
             </div>
             <p
