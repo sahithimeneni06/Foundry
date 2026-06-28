@@ -1,10 +1,34 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Phone, Mail, User, MessageSquare, CheckCircle, AlertCircle, Coins, Zap } from 'lucide-react';
+import {
+  Send,
+  Phone,
+  Mail,
+  User,
+  MessageSquare,
+  CheckCircle,
+  AlertCircle,
+  Zap,
+} from 'lucide-react';
+import { createClient } from '@supabase/supabase-js';
 
 export default function ContactForm() {
+  // ─── Supabase client ──────────────────────────────────────────────
+  const supabase = useMemo(() => {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
+
+    if (!url || !key) {
+      console.error('❌ Missing Supabase environment variables');
+      return null;
+    }
+
+    const cleanUrl = url.endsWith('/') ? url.slice(0, -1) : url;
+    return createClient(cleanUrl, key);
+  }, []);
+
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -12,25 +36,17 @@ export default function ContactForm() {
     projectType: 'Web Dev',
     budget: 'Seed Funded',
     mood: 'ASAP',
-    message: ''
+    message: '',
   });
 
   const [status, setStatus] = useState('idle');
   const [errorMessage, setErrorMessage] = useState('');
 
   const projectTypes = ['Restaurant', 'Website', 'Poster Design', 'Bakery/Cafe', 'Other'];
-  
-  const budgets = [
-    { name: 'Broke', value: 'Broke' },
-    { name: 'Seed Funded', value: 'Seed Funded' },
-    { name: 'Venture Backed', value: 'Venture Backed' },
-    { name: 'Enterprise Whale', value: 'Enterprise Whale' }
-  ];
-
   const moods = [
     { name: 'ASAP', value: 'ASAP' },
     { name: 'Chill', value: 'Chill' },
-    { name: 'No rush', value: 'No rush' }
+    { name: 'No rush', value: 'No rush' },
   ];
 
   const handleChange = (e) => {
@@ -44,9 +60,16 @@ export default function ContactForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!formData.name || !formData.email) {
       setStatus('error');
       setErrorMessage('Please provide both your name and email address so we can chat!');
+      return;
+    }
+
+    if (!supabase) {
+      setStatus('error');
+      setErrorMessage('Supabase client is not initialized.');
       return;
     }
 
@@ -54,46 +77,57 @@ export default function ContactForm() {
     setErrorMessage('');
 
     try {
-      const response = await fetch('/api/contact', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
+      // ─── Generate a unique ID ────────────────────────────────────
+      const id = crypto.randomUUID(); // modern browsers & Next.js
 
-      const result = await response.json();
+      const payload = {
+        id,                     // 👈 now we provide the primary key
+        name: formData.name,
+        phone: formData.phone,
+        email: formData.email,
+        projectType: formData.projectType,
+        budget: 0,
+        mood: formData.mood,
+        message: formData.message,
+      };
 
-      if (result.success) {
-        setStatus('success');
-      } else {
+      console.log('📤 Payload:', payload);
+
+      const { data, error } = await supabase
+        .from('inquiries')
+        .insert([payload])
+        .select();
+
+      console.log('📥 Response:', { data, error });
+
+      if (error) {
+        console.error('❌ Supabase error details:', JSON.stringify(error, null, 2));
         setStatus('error');
-        setErrorMessage(result.error || 'Something went wrong saving details.');
+        setErrorMessage(error.message || 'Failed to save inquiry.');
+      } else {
+        console.log('✅ Insert successful!', data);
+        setStatus('success');
       }
-    } catch (error) {
-      console.error('Error submitting form:', error);
+    } catch (err) {
+      console.error('💥 Unexpected error:', err);
       setStatus('error');
-      setErrorMessage('Connection failed. Please check if the server is running.');
+      setErrorMessage(err.message || 'Connection failed.');
     }
   };
 
   return (
-    <section 
-      id="contact" 
-      style={{ 
-        backgroundColor: '#f7efe8', 
-        padding: '100px 0', 
-        borderTop: '1px solid #f0e1da', 
+    <section
+      id="contact"
+      style={{
+        backgroundColor: '#f7efe8',
+        padding: '100px 0',
+        borderTop: '1px solid #f0e1da',
         borderBottom: '1px solid #faf4f1',
-        fontFamily: 'system-ui, -apple-system, sans-serif'
+        fontFamily: 'system-ui, -apple-system, sans-serif',
       }}
     >
       <style>{`
-        /* ── all styles scoped to this section ── */
-        .contact-wrapper * {
-          box-sizing: border-box;
-        }
-
+        .contact-wrapper * { box-sizing: border-box; }
         .contact-wrapper {
           max-width: 750px;
           margin: 0 auto;
@@ -101,8 +135,6 @@ export default function ContactForm() {
           position: relative;
           z-index: 1;
         }
-
-        /* badge */
         .contact-badge {
           display: inline-flex;
           align-items: center;
@@ -119,7 +151,6 @@ export default function ContactForm() {
           border-radius: 9999px;
           box-shadow: 0 2px 8px rgba(0,0,0,0.02);
         }
-
         .contact-heading {
           font-size: clamp(2rem, 3.5vw, 2.8rem);
           font-weight: 900;
@@ -128,13 +159,11 @@ export default function ContactForm() {
           margin: 16px 0 12px;
           line-height: 1.12;
         }
-
         .contact-heading span {
           background: linear-gradient(135deg, #d4735a, #e8835a);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
         }
-
         .contact-sub {
           color: #6b4c3a;
           font-size: 1rem;
@@ -143,8 +172,6 @@ export default function ContactForm() {
           margin: 0 auto;
           line-height: 1.6;
         }
-
-        /* card */
         .contact-card {
           background: rgba(255,255,255,0.92);
           backdrop-filter: blur(4px);
@@ -152,21 +179,16 @@ export default function ContactForm() {
           border-radius: 24px;
           padding: 48px;
           box-shadow: 0 12px 48px rgba(180,100,70,0.08), 0 2px 8px rgba(0,0,0,0.02);
-          position: relative;
           transition: box-shadow 0.3s ease;
         }
-
         .contact-card:hover {
           box-shadow: 0 20px 64px rgba(180,100,70,0.12), 0 2px 8px rgba(0,0,0,0.02);
         }
-
-        /* form groups */
         .form-group {
           display: flex;
           flex-direction: column;
           gap: 6px;
         }
-
         .form-label {
           font-size: 0.6rem;
           font-weight: 800;
@@ -177,7 +199,6 @@ export default function ContactForm() {
           align-items: center;
           gap: 6px;
         }
-
         .form-input {
           width: 100%;
           padding: 10px 14px;
@@ -191,25 +212,20 @@ export default function ContactForm() {
           transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
           font-family: inherit;
         }
-
         .form-input:focus {
           border-color: #d4735a;
           background: #ffffff;
           box-shadow: 0 0 0 3px rgba(212,115,90,0.15);
         }
-
         .form-input::placeholder {
           color: #b09080;
           font-weight: 400;
           font-size: 0.8rem;
         }
-
         textarea.form-input {
           resize: vertical;
           min-height: 90px;
         }
-
-        /* segmented controls */
         .segmented-wrap {
           display: flex;
           background: #fef6f0;
@@ -218,7 +234,6 @@ export default function ContactForm() {
           padding: 4px;
           gap: 2px;
         }
-
         .segmented-btn {
           flex: 1;
           padding: 8px 12px;
@@ -234,19 +249,15 @@ export default function ContactForm() {
           transition: background 0.2s, color 0.2s, box-shadow 0.2s;
           font-family: inherit;
         }
-
         .segmented-btn.active {
           background: white;
           color: #2d1b14;
           box-shadow: 0 2px 8px rgba(0,0,0,0.04);
         }
-
         .segmented-btn:not(.active):hover {
           color: #2d1b14;
           background: rgba(255,255,255,0.5);
         }
-
-        /* submit button */
         .submit-btn {
           width: 100%;
           padding: 14px;
@@ -267,25 +278,20 @@ export default function ContactForm() {
           box-shadow: 0 4px 16px rgba(212,115,90,0.25);
           font-family: inherit;
         }
-
         .submit-btn:hover:not(:disabled) {
           background: linear-gradient(135deg, #c0624a, #d4735a);
           box-shadow: 0 6px 24px rgba(212,115,90,0.35);
           transform: translateY(-1px);
         }
-
         .submit-btn:active:not(:disabled) {
           transform: translateY(0);
           box-shadow: 0 2px 8px rgba(212,115,90,0.2);
         }
-
         .submit-btn:disabled {
           opacity: 0.6;
           cursor: not-allowed;
           transform: none;
         }
-
-        /* success state */
         .success-icon {
           width: 64px;
           height: 64px;
@@ -298,7 +304,6 @@ export default function ContactForm() {
           color: #d4735a;
           margin: 0 auto 16px;
         }
-
         .success-card {
           background: #fef6f0;
           border: 1px solid #f0d5c8;
@@ -312,13 +317,11 @@ export default function ContactForm() {
           color: #4d3228;
           line-height: 1.8;
         }
-
         .success-card .label {
           opacity: 0.5;
           font-weight: 700;
           letter-spacing: 0.04em;
         }
-
         .reset-btn {
           padding: 8px 24px;
           border: 2px solid #f0d5c8;
@@ -332,13 +335,10 @@ export default function ContactForm() {
           transition: background 0.2s, border-color 0.2s;
           font-family: inherit;
         }
-
         .reset-btn:hover {
           background: #fef6f0;
           border-color: #d4735a;
         }
-
-        /* error box */
         .error-box {
           padding: 12px 16px;
           border-radius: 12px;
@@ -351,24 +351,13 @@ export default function ContactForm() {
           align-items: center;
           gap: 8px;
         }
-
-        /* responsive */
         @media (max-width: 768px) {
-          .contact-card {
-            padding: 32px 20px;
-          }
-          .grid-3 {
-            grid-template-columns: 1fr !important;
-            gap: 16px !important;
-          }
-          .form-grid {
-            gap: 16px !important;
-          }
+          .contact-card { padding: 32px 20px; }
+          .grid-3 { grid-template-columns: 1fr !important; gap: 16px !important; }
         }
       `}</style>
 
       <div className="contact-wrapper">
-        {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '48px' }}>
           <span className="contact-badge">✦ Collaboration Brief</span>
           <h2 className="contact-heading">
@@ -379,7 +368,6 @@ export default function ContactForm() {
           </p>
         </div>
 
-        {/* Form Card */}
         <div className="contact-card">
           <AnimatePresence mode="wait">
             {status === 'success' ? (
@@ -388,13 +376,22 @@ export default function ContactForm() {
                 initial={{ opacity: 0, scale: 0.96 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.96 }}
-                style={{ textAlign: 'center', padding: '24px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '24px' }}
+                style={{
+                  textAlign: 'center',
+                  padding: '24px 0',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '24px',
+                }}
               >
                 <div className="success-icon">
                   <CheckCircle size={32} />
                 </div>
                 <div>
-                  <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#2d1b14', marginBottom: '6px' }}>Brief Received Successfully</h3>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#2d1b14', marginBottom: '6px' }}>
+                    Brief Received Successfully
+                  </h3>
                   <p style={{ fontSize: '0.8rem', color: '#6b4c3a', fontWeight: 500, maxWidth: '400px', margin: '0 auto' }}>
                     We've logged your inquiry. You'll hear back from us shortly.
                   </p>
@@ -403,16 +400,24 @@ export default function ContactForm() {
                   <div style={{ borderBottom: '1px solid #f0d5c8', paddingBottom: '6px', marginBottom: '8px', fontWeight: 800, color: '#d4735a', letterSpacing: '0.06em', fontSize: '0.55rem', textTransform: 'uppercase' }}>
                     INQUIRY SNAPSHOT
                   </div>
-                  <p><span className="label">NAME</span>  {formData.name}</p>
+                  <p><span className="label">NAME</span> {formData.name}</p>
                   <p><span className="label">EMAIL</span> {formData.email}</p>
                   <p><span className="label">PROJECT</span> {formData.projectType.toUpperCase()}</p>
-                  <p><span className="label">BUDGET</span> {formData.budget.toUpperCase()}</p>
-                  <p style={{ marginBottom: 0 }}><span className="label">PACE</span> {formData.mood.toUpperCase()}</p>
+                  <p><span className="label">PACE</span> {formData.mood.toUpperCase()}</p>
+                  <p style={{ marginBottom: 0 }}><span className="label">BUDGET</span> {formData.budget}</p>
                 </div>
-                <button 
+                <button
                   className="reset-btn"
                   onClick={() => {
-                    setFormData({ name: '', phone: '', email: '', projectType: 'Web Dev', budget: 'Seed Funded', mood: 'ASAP', message: '' });
+                    setFormData({
+                      name: '',
+                      phone: '',
+                      email: '',
+                      projectType: 'Web Dev',
+                      budget: 'Seed Funded',
+                      mood: 'ASAP',
+                      message: '',
+                    });
                     setStatus('idle');
                   }}
                 >
@@ -428,7 +433,6 @@ export default function ContactForm() {
                 exit={{ opacity: 0 }}
                 style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}
               >
-                {/* 3-column grid */}
                 <div className="grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
                   <div className="form-group">
                     <label className="form-label"><User size={12} /> Full Name *</label>
@@ -461,13 +465,12 @@ export default function ContactForm() {
                       required
                       value={formData.email}
                       onChange={handleChange}
-                      placeholder="airavathafoundry@gmail.com"
+                      placeholder="you@example.com"
                       className="form-input"
                     />
                   </div>
                 </div>
 
-                {/* Project Type */}
                 <div className="form-group">
                   <label className="form-label">Project Category</label>
                   <div className="segmented-wrap">
@@ -484,24 +487,6 @@ export default function ContactForm() {
                   </div>
                 </div>
 
-                {/* Budget */}
-                {/* <div className="form-group">
-                  <label className="form-label"><Coins size={12} /> Budget Tier</label>
-                  <div className="segmented-wrap">
-                    {budgets.map((b) => (
-                      <button
-                        key={b.value}
-                        type="button"
-                        onClick={() => handleSelect('budget', b.value)}
-                        className={`segmented-btn ${formData.budget === b.value ? 'active' : ''}`}
-                      >
-                        {b.name}
-                      </button>
-                    ))}
-                  </div>
-                </div> */}
-
-                {/* Mood */}
                 <div className="form-group">
                   <label className="form-label"><Zap size={12} /> Project Pace</label>
                   <div className="segmented-wrap">
@@ -518,7 +503,6 @@ export default function ContactForm() {
                   </div>
                 </div>
 
-                {/* Message */}
                 <div className="form-group">
                   <label className="form-label"><MessageSquare size={12} /> Project Brief</label>
                   <textarea
@@ -531,7 +515,6 @@ export default function ContactForm() {
                   />
                 </div>
 
-                {/* Error */}
                 {status === 'error' && (
                   <motion.div
                     initial={{ opacity: 0, y: 5 }}
@@ -543,7 +526,6 @@ export default function ContactForm() {
                   </motion.div>
                 )}
 
-                {/* Submit */}
                 <button
                   type="submit"
                   disabled={status === 'loading'}
@@ -551,7 +533,15 @@ export default function ContactForm() {
                 >
                   {status === 'loading' ? (
                     <>
-                      <span style={{ display: 'inline-block', width: '18px', height: '18px', border: '2px solid rgba(255,255,255,0.25)', borderTopColor: 'white', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                      <span style={{
+                        display: 'inline-block',
+                        width: '18px',
+                        height: '18px',
+                        border: '2px solid rgba(255,255,255,0.25)',
+                        borderTopColor: 'white',
+                        borderRadius: '50%',
+                        animation: 'spin 0.8s linear infinite',
+                      }} />
                       SENDING...
                     </>
                   ) : (
@@ -566,7 +556,6 @@ export default function ContactForm() {
         </div>
       </div>
 
-      {/* keyframe for spinner */}
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>
