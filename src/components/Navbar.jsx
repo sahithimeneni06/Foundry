@@ -86,7 +86,7 @@ export default function Navbar() {
           >
             <div style={{ width:'48px', height:'48px', borderRadius:'50%', padding:'2px', background:'linear-gradient(135deg,#c9963a,#e8b84b)', boxShadow:'0 4px 12px rgba(201,150,58,0.25)' }}>
               <img
-                src="/logo.jpg"
+                src="/logo.png"
                 alt="AIravatha Logo"
                 style={{ width:'100%', height:'100%', borderRadius:'50%', objectFit:'cover', border:'2px solid white' }}
               />

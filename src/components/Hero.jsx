@@ -4,7 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { Sparkles, ArrowDownRight, Zap, Code, Utensils, Brush, Cake, Brain } from 'lucide-react';
-import heroImage from './logo.jpg'; // local image in same folder
+import heroImage from './logo.png'; // local image in same folder
 
 export default function Hero() {
   const scrollTosection = (id) => {

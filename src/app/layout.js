@@ -12,17 +12,17 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "AIravatha",
+  title: "Airavatha",
   description: "Digital Design & Development Studio",
   openGraph: {
-    title: "AIravatha",
+    title: "Airavatha",
     description: "Digital Design & Development Studio",
     images: [
       {
         url: "/logo.png",  // your OG image
         width: 1200,
         height: 630,
-        alt: "AIravatha Logo",
+        alt: "Airavatha Logo",
       },
     ],
   },
